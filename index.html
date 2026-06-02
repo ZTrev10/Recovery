@@ -32,7 +32,7 @@ body{background:transparent;font-family:'DM Mono',monospace;font-size:14px;}
 input[type=range]{-webkit-appearance:none;width:100%;height:2px;background:var(--border2);border-radius:2px;outline:none;}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;}
 input[type=number],input[type=text],select,textarea{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);color:#e8e4dc;font-family:'DM Mono',monospace;font-size:13px;padding:9px 12px;outline:none;-webkit-appearance:none;}
-select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3CAIRTABLE_TOKEN_REMOVED_USE_NETLIFY_FUNCTION fill='%239a9590' d='M6 8L0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3C fill='%239a9590' d='M6 8L0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
 select option{background:#1a1918;}
 textarea{min-height:80px;resize:vertical;line-height:1.6;}
 textarea::placeholder,input::placeholder{color:var(--text3);}
@@ -128,8 +128,8 @@ textarea{min-height:110px !important;}
     <div id="slpsec" class="sec"><div class="two"><div><div class="lbl">Sleep hours</div><input type="number" id="slphr" placeholder="e.g. 7.5" step="0.5" min="0" max="14"></div><div><div class="lbl">Sleep quality</div><select id="slpq"><option value="">-- select --</option><option>Poor</option><option>Fair</option><option>Good</option><option>Great</option></select></div></div></div>
     <div class="sec"><div class="two"><div class="sw"><div class="st"><span class="sn">Physical</span><span class="sv" id="pval">7</span></div><input type="range" min="1" max="10" step="1" value="7" id="pscr" oninput="RL.updateScore('pscr','pval')" onchange="RL.updateScore('pscr','pval')"></div><div class="sw"><div class="st"><span class="sn">Mental</span><span class="sv" id="mval">7</span></div><input type="range" min="1" max="10" step="1" value="7" id="mscr" oninput="RL.updateScore('mscr','mval')" onchange="RL.updateScore('mscr','mval')"></div></div></div>
     <div class="sec"><div class="lbl">Symptoms</div><div class="pill-row" id="symp"><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Headache</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Fatigue</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Brain Fog</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Disorientation</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Itching</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Balance</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Rash</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Pain</button></div></div>
-    <div class="sec"><div class="lbl">Mood</div><div class="pill-row" id="mood"><button type="button" class="pill" onclick="RL.selectMood(this)">Happy</button><button type="button" class="pill" onclick="RL.selectMood(this)">Good</button><button type="button" class="pill" onclick="RL.selectMood(this)">Optimistic</button><button type="button" class="pill" onclick="RL.selectMood(this)">Confident</button><button type="button" class="pill" onclick="RL.selectMood(this)">Anxious</button><button type="button" class="pill" onclick="RL.selectMood(this)">Irritable</button><button type="button" class="pill" onclick="RL.selectMood(this)">Sad</button><button type="button" class="pill" onclick="RL.selectMood(this)">AAIRTABLE_TOKEN_REMOVED_USE_NETLIFY_FUNCTION</button></div></div>
-    <div class="sec"><div class="lbl">Bowel movement</div><select id="bm"><option value="">-- select --</option><option>None today</option><option>Normal</option><option>Loose</option><option>Watery / diarrhea</option><option>Hard / constiAIRTABLE_TOKEN_REMOVED_USE_NETLIFY_FUNCTION</option><option>Bloody / unusual color</option></select></div>
+    <div class="sec"><div class="lbl">Mood</div><div class="pill-row" id="mood"><button type="button" class="pill" onclick="RL.selectMood(this)">Happy</button><button type="button" class="pill" onclick="RL.selectMood(this)">Good</button><button type="button" class="pill" onclick="RL.selectMood(this)">Optimistic</button><button type="button" class="pill" onclick="RL.selectMood(this)">Confident</button><button type="button" class="pill" onclick="RL.selectMood(this)">Anxious</button><button type="button" class="pill" onclick="RL.selectMood(this)">Irritable</button><button type="button" class="pill" onclick="RL.selectMood(this)">Sad</button><button type="button" class="pill" onclick="RL.selectMood(this)">A</button></div></div>
+    <div class="sec"><div class="lbl">BM</div><select id="bm"><option value="">-- select --</option><option>None today</option><option>Normal</option><option>Loose</option><option>Watery / diarrhea</option><option>Hard / consti</option><option>Bloody / unusual color</option></select></div>
     <div class="sec"><div class="lbl">Notes</div><textarea id="notes" placeholder="Describe symptoms, observations, how you're feeling..."></textarea></div>
     <button class="sbtn" id="savebtn" type="button" onclick="RL.saveEntry()">Save Entry</button>
   </div>
@@ -450,6 +450,104 @@ input[type=range]::-moz-range-thumb{
 }
 </style>
 
+
+<style id="final-log-layout-fixes">
+/* Spacing fixes */
+.tabs{
+  margin-bottom:0.95rem!important;
+}
+#plog > .sec:first-of-type{
+  margin-top:0!important;
+}
+.sec{
+  margin-bottom:1.05rem!important;
+}
+
+/* Desktop: fit symptoms and mood on one line without scrolling */
+@media(min-width:701px){
+  #app{
+    max-width:760px!important;
+  }
+  #symp,#mood{
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    gap:5px!important;
+    overflow:visible!important;
+  }
+  #symp .pill,#mood .pill{
+    flex:0 1 auto!important;
+    white-space:nowrap!important;
+    font-size:11px!important;
+    padding:5px 9px!important;
+    min-height:29px!important;
+  }
+  #mood .pill{
+    padding-left:8px!important;
+    padding-right:8px!important;
+  }
+}
+
+/* Mobile: reduce top gap, slimmer score cards, smaller numbers, denser pills */
+@media(max-width:700px){
+  .tabs{
+    margin-bottom:1.0rem!important;
+  }
+  .sec{
+    margin-bottom:1.12rem!important;
+  }
+  .sw{
+    padding:13px 14px 13px!important;
+  }
+  .st{
+    margin-bottom:6px!important;
+  }
+  .sv{
+    font-size:28px!important;
+  }
+  .sn{
+    font-size:14px!important;
+  }
+  input[type=range]{
+    height:34px!important;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    width:26px!important;
+    height:26px!important;
+    margin-top:-10px!important;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:26px!important;
+    height:26px!important;
+  }
+  #symp,#mood{
+    display:flex!important;
+    flex-wrap:wrap!important;
+    gap:6px!important;
+    overflow:visible!important;
+    align-items:flex-start!important;
+  }
+  #symp .pill,#mood .pill{
+    flex:0 1 auto!important;
+    white-space:nowrap!important;
+    font-size:12px!important;
+    padding:7px 9px!important;
+    min-height:34px!important;
+  }
+  #mood .pill{
+    padding-left:8px!important;
+    padding-right:8px!important;
+  }
+}
+
+/* Very narrow mobile: allow maximum pills per line */
+@media(max-width:390px){
+  #symp .pill,#mood .pill{
+    font-size:11px!important;
+    padding:7px 8px!important;
+  }
+}
+</style>
+
 <script>
 window.RL = {
   token: '',
@@ -460,7 +558,7 @@ window.RL = {
   hist: [],
   docRows: [],
   $: function(id){ return document.getElementById(id); },
-  headers: function(){ if(!this.token){throw new Error('Airtable token removed. Add Netlify Function before saving.');} return {'Authorization':'Bearer '+this.token,'Content-Type':'application/json'}; },
+  headers: function(){ if(!this.token){throw new Error('Airtable is not connected yet.');} return {'Authorization':'Bearer '+this.token,'Content-Type':'application/json'}; },
   url: function(table, params){
     var u = 'https://api.airtable.com/v0/' + this.base + '/' + table;
     if(params) u += '?' + new URLSearchParams(params);
@@ -593,7 +691,7 @@ window.RL = {
     var h='<div class="ms"><div class="ml">Scores</div><div class="mv">Physical '+e.physScore+'/10 · Mental '+e.mentScore+'/10</div></div>';
     if(e.sleepHrs)h+='<div class="ms"><div class="ml">Sleep</div><div class="mv">'+this.esc(e.sleepHrs)+'h'+(e.sleepQual?' · '+this.esc(e.sleepQual):'')+'</div></div>';
     if(e.mood)h+='<div class="ms"><div class="ml">Mood</div><div class="mv">'+this.esc(e.mood)+'</div></div>';
-    if(e.bm)h+='<div class="ms"><div class="ml">Bowel movement</div><div class="mv">'+this.esc(e.bm)+'</div></div>';
+    if(e.bm)h+='<div class="ms"><div class="ml">BM</div><div class="mv">'+this.esc(e.bm)+'</div></div>';
     if(e.symptoms)h+='<div class="ms"><div class="ml">Symptoms</div><div class="mv">'+this.esc(e.symptoms)+'</div></div>';
     if(e.notes)h+='<div class="ms"><div class="ml">Notes</div><div class="mv">'+this.esc(e.notes)+'</div></div>';
     this.$('mbody').innerHTML=h; this.$('modal').classList.add('open');
