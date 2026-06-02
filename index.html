@@ -597,10 +597,10 @@ window.RL = {
   hist: [],
   docRows: [],
   $: function(id){ return document.getElementById(id); },
-  headers: function(){ if(!this.token){throw new Error('Airtable is not connected yet.');} return {'Authorization':'Bearer '+this.token,'Content-Type':'application/json'}; },
+  headers: function(){ return {'Content-Type':'application/json'}; },
   url: function(table, params){
-    var u = 'https://api.airtable.com/v0/' + this.base + '/' + table;
-    if(params) u += '?' + new URLSearchParams(params);
+    var u = '/.netlify/functions/airtable?table=' + encodeURIComponent(table);
+    if(params) u += '&' + new URLSearchParams(params);
     return u;
   },
   esc: function(s){ return String(s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); },
@@ -746,4 +746,4 @@ window.RL = {
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){RL.init();});}else{RL.init();}
 </script>
 
-<!-- commit-trigger-sleep-quality-good -->
+<!-- commit-trigger-airtable-function-fix -->
