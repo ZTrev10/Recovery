@@ -125,10 +125,10 @@ textarea{min-height:110px !important;}
   <div id="plog">
     <div class="stb" id="lstatus"></div>
     <div class="sec"><div class="lbl">Session</div><div class="pill-row"><button class="pill sp sel" type="button" id="pmorn" onclick="RL.setSession('morning')">&#9728; Morning</button><button class="pill sp" type="button" id="peve" onclick="RL.setSession('evening')">&#9789; Evening</button></div></div>
-    <div id="slpsec" class="sec"><div class="two"><div><div class="lbl">Sleep hours</div><input type="number" id="slphr" placeholder="e.g. 7.5" step="0.5" min="0" max="14"></div><div><div class="lbl">Sleep quality</div><select id="slpq"><option value="">-- select --</option><option>Poor</option><option>Fair</option><option>Good</option><option>Great</option></select></div></div></div>
+    <div id="slpsec" class="sec"><div class="two"><div><div class="lbl">Sleep hours</div><input type="number" id="slphr" placeholder="e.g. 7.5" step="0.5" min="0" max="14"></div><div><div class="lbl">Sleep quality</div><select id="slpq"><option value="">-- select --</option><option>Poor</option><option>Fair</option><option>Hopeful</option><option>Great</option></select></div></div></div>
     <div class="sec"><div class="two"><div class="sw"><div class="st"><span class="sn">Physical</span><span class="sv" id="pval">7</span></div><input type="range" min="1" max="10" step="1" value="7" id="pscr" oninput="RL.updateScore('pscr','pval')" onchange="RL.updateScore('pscr','pval')"></div><div class="sw"><div class="st"><span class="sn">Mental</span><span class="sv" id="mval">7</span></div><input type="range" min="1" max="10" step="1" value="7" id="mscr" oninput="RL.updateScore('mscr','mval')" onchange="RL.updateScore('mscr','mval')"></div></div></div>
     <div class="sec"><div class="lbl">Symptoms</div><div class="pill-row" id="symp"><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Headache</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Fatigue</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Brain Fog</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Disorientation</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Itching</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Balance</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Rash</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Pain</button></div></div>
-    <div class="sec"><div class="lbl">Mood</div><div class="pill-row" id="mood"><button type="button" class="pill" onclick="RL.selectMood(this)">Happy</button><button type="button" class="pill" onclick="RL.selectMood(this)">Good</button><button type="button" class="pill" onclick="RL.selectMood(this)">Optimistic</button><button type="button" class="pill" onclick="RL.selectMood(this)">Confident</button><button type="button" class="pill" onclick="RL.selectMood(this)">Anxious</button><button type="button" class="pill" onclick="RL.selectMood(this)">Irritable</button><button type="button" class="pill" onclick="RL.selectMood(this)">Sad</button></div></div>
+    <div class="sec"><div class="lbl">Mood</div><div class="pill-row" id="mood"><button type="button" class="pill" onclick="RL.selectMood(this)">Happy</button><button type="button" class="pill" onclick="RL.selectMood(this)">Hopeful</button><button type="button" class="pill" onclick="RL.selectMood(this)">Calm</button><button type="button" class="pill" onclick="RL.selectMood(this)">Confident</button><button type="button" class="pill" onclick="RL.selectMood(this)">Anxious</button><button type="button" class="pill" onclick="RL.selectMood(this)">Frustrated</button><button type="button" class="pill" onclick="RL.selectMood(this)">Discouraged</button></div></div>
     <div class="sec"><div class="lbl">BM</div><select id="bm"><option value="">-- select --</option><option>None today</option><option>Normal</option><option>Loose</option><option>Watery / diarrhea</option><option>Hard / consti</option><option>Bloody / unusual color</option></select></div>
     <div class="sec"><div class="lbl">Notes</div><textarea id="notes" placeholder="Describe symptoms, observations, how you're feeling..."></textarea></div>
     <button class="sbtn" id="savebtn" type="button" onclick="RL.saveEntry()">Save Entry</button>
@@ -635,14 +635,13 @@ window.RL = {
   },
   toggleSymptom: function(btn){ btn.classList.toggle('sel'); },
   selectMood: function(btn){
-    document.querySelectorAll('#mood .pill').forEach(function(x){x.classList.remove('sel');});
-    btn.classList.add('sel');
+    btn.classList.toggle('sel');
   },
   saveEntry: function(){
     var self=this, btn=this.$('savebtn');
     var syms=[];
     document.querySelectorAll('#symp .pill.sel').forEach(function(p){syms.push(p.textContent.trim());});
-    var mood=document.querySelector('#mood .pill.sel');
+    var moods=[];document.querySelectorAll('#mood .pill.sel').forEach(function(p){moods.push(p.textContent.trim());});
     var fields={
       'Date':new Date().toISOString().split('T')[0],
       'Session':this.session.charAt(0).toUpperCase()+this.session.slice(1),
@@ -651,7 +650,7 @@ window.RL = {
       'Sleep Hours':this.session==='morning'?(parseFloat(this.$('slphr').value)||0):0,
       'Sleep Quality':this.session==='morning'?this.$('slpq').value:'',
       'Symptoms':syms.join(', '),
-      'Mood':mood?mood.textContent.trim():'',
+      'Mood':moods.join(', '),
       'BM':this.$('bm').value,
       'Notes':this.$('notes').value.trim()
     };
