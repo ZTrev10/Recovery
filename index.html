@@ -605,10 +605,50 @@ window.RL = {
   },
   esc: function(s){ return String(s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); },
   status: function(id,msg,type){ var e=this.$(id); if(!e)return; e.textContent=msg||''; e.className='stb'+(type?' '+type:''); },
+
+  laDateParts: function(dateObj){
+    var parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone:'America/Los_Angeles',
+      year:'numeric',
+      month:'2-digit',
+      day:'2-digit',
+      hour:'2-digit',
+      minute:'2-digit',
+      hour12:false
+    }).formatToParts(dateObj || new Date()).reduce(function(acc,p){
+      acc[p.type]=p.value; return acc;
+    }, {});
+    return parts;
+  },
+  localDate: function(){
+    var p=this.laDateParts(new Date());
+    return p.year + '-' + p.month + '-' + p.day;
+  },
+  localDateLabel: function(){
+    return new Date().toLocaleDateString('en-US', {
+      timeZone:'America/Los_Angeles',
+      weekday:'short',
+      month:'short',
+      day:'numeric',
+      year:'numeric'
+    });
+  },
+  defaultSession: function(){
+    var p=this.laDateParts(new Date());
+    var hour=parseInt(p.hour,10);
+    var minute=parseInt(p.minute,10);
+    var total=hour*60+minute;
+    return (total >= 60 && total <= 960) ? 'morning' : 'evening';
+  },
+  sessionRank: function(s){
+    s=(s||'').toLowerCase();
+    return s==='evening' ? 2 : 1;
+  },
+
   init: function(){
     var t=this.$('tlabel');
-    if(t) t.textContent = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
-    this.setSession('morning');
+    if(t) t.textContent = this.localDateLabel();
+    this.setSession(this.defaultSession());
     this.updateScore('pscr','pval');
     this.updateScore('mscr','mval');
   },
@@ -643,7 +683,7 @@ window.RL = {
     document.querySelectorAll('#symp .pill.sel').forEach(function(p){syms.push(p.textContent.trim());});
     var moods=[];document.querySelectorAll('#mood .pill.sel').forEach(function(p){moods.push(p.textContent.trim());});
     var fields={
-      'Date':new Date().toISOString().split('T')[0],
+      'Date':this.localDate(),
       'Session':this.session.charAt(0).toUpperCase()+this.session.slice(1),
       'Physical':parseInt(this.$('pscr').value,10),
       'Mental':parseInt(this.$('mscr').value,10),
@@ -705,7 +745,10 @@ window.RL = {
     var self=this; this.status('hstatus','Loading...',''); this.$('ecount').textContent='';
     fetch(this.url(this.entries,{'sort[0][field]':'Date','sort[0][direction]':'desc',maxRecords:60}),{headers:this.headers()})
       .then(function(r){if(!r.ok)throw new Error(r.status);return r.json();})
-      .then(function(d){self.hist=(d.records||[]).map(function(r){return{id:r.id,date:r.fields.Date||'',session:(r.fields.Session||'Morning').toLowerCase(),physScore:r.fields.Physical||0,mentScore:r.fields.Mental||0,sleepHrs:r.fields['Sleep Hours']||'',sleepQual:r.fields['Sleep Quality']||'',symptoms:r.fields.Symptoms||'',mood:r.fields.Mood||'',bm:r.fields.BM||'',notes:r.fields.Notes||''};});self.status('hstatus','','');self.renderHist();})
+      .then(function(d){self.hist=(d.records||[]).map(function(r){return{id:r.id,date:r.fields.Date||'',session:(r.fields.Session||'Morning').toLowerCase(),physScore:r.fields.Physical||0,mentScore:r.fields.Mental||0,sleepHrs:r.fields['Sleep Hours']||'',sleepQual:r.fields['Sleep Quality']||'',symptoms:r.fields.Symptoms||'',mood:r.fields.Mood||'',bm:r.fields.BM||'',notes:r.fields.Notes||''};});self.hist.sort(function(a,b){
+        if(a.date!==b.date) return a.date < b.date ? 1 : -1;
+        return self.sessionRank(b.session) - self.sessionRank(a.session);
+      });self.status('hstatus','','');self.renderHist();})
       .catch(function(e){self.status('hstatus','Could not load entries: '+e.message,'err');});
   },
   renderHist: function(){
@@ -746,4 +789,4 @@ window.RL = {
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){RL.init();});}else{RL.init();}
 </script>
 
-<!-- commit-trigger-airtable-function-fix -->
+<!-- commit-trigger-local-date-session-history -->
