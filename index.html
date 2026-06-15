@@ -124,14 +124,16 @@ textarea{min-height:110px !important;}
   </div>
   <div id="plog">
     <div class="stb" id="lstatus"></div>
+    <div class="stb" id="editstatus"></div>
+    <div class="sec"><div class="lbl">Date</div><input type="date" id="entrydate"></div>
     <div class="sec"><div class="lbl">Session</div><div class="pill-row"><button class="pill sp sel" type="button" id="pmorn" onclick="RL.setSession('morning')">&#9728; Morning</button><button class="pill sp" type="button" id="peve" onclick="RL.setSession('evening')">&#9789; Evening</button></div></div>
     <div id="slpsec" class="sec"><div class="two"><div><div class="lbl">Sleep hours</div><input type="number" id="slphr" placeholder="e.g. 7.5" step="0.5" min="0" max="14"></div><div><div class="lbl">Sleep quality</div><select id="slpq"><option value="">-- select --</option><option>Poor</option><option>Fair</option><option>Good</option><option>Great</option></select></div></div></div>
     <div class="sec"><div class="two"><div class="sw"><div class="st"><span class="sn">Physical</span><span class="sv" id="pval">7</span></div><input type="range" min="1" max="10" step="1" value="7" id="pscr" oninput="RL.updateScore('pscr','pval')" onchange="RL.updateScore('pscr','pval')"></div><div class="sw"><div class="st"><span class="sn">Mental</span><span class="sv" id="mval">7</span></div><input type="range" min="1" max="10" step="1" value="7" id="mscr" oninput="RL.updateScore('mscr','mval')" onchange="RL.updateScore('mscr','mval')"></div></div></div>
     <div class="sec"><div class="lbl">Symptoms</div><div class="pill-row" id="symp"><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Headache</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Fatigue</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Brain Fog</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Disorientation</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Itching</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Balance</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Rash</button><button type="button" class="pill" onclick="RL.toggleSymptom(this)">Pain</button></div></div>
     <div class="sec"><div class="lbl">Mood</div><div class="pill-row" id="mood"><button type="button" class="pill" onclick="RL.selectMood(this)">Happy</button><button type="button" class="pill" onclick="RL.selectMood(this)">Hopeful</button><button type="button" class="pill" onclick="RL.selectMood(this)">Calm</button><button type="button" class="pill" onclick="RL.selectMood(this)">Confident</button><button type="button" class="pill" onclick="RL.selectMood(this)">Anxious</button><button type="button" class="pill" onclick="RL.selectMood(this)">Frustrated</button><button type="button" class="pill" onclick="RL.selectMood(this)">Discouraged</button><button type="button" class="pill" onclick="RL.selectMood(this)">Apathetic</button></div></div>
-    <div class="sec"><div class="lbl">BM</div><select id="bm"><option value="">-- select --</option><option>None today</option><option>Normal</option><option>Loose</option><option>Watery / diarrhea</option><option>Hard / consti</option><option>Bloody / unusual color</option></select></div>
     <div class="sec"><div class="lbl">Notes</div><textarea id="notes" placeholder="Describe symptoms, observations, how you're feeling..."></textarea></div>
     <button class="sbtn" id="savebtn" type="button" onclick="RL.saveEntry()">Save Entry</button>
+    <button class="eb" id="cancelEditBtn" type="button" onclick="RL.cancelEdit()" style="display:none;width:100%;margin-top:.65rem;padding:10px;">Cancel edit</button>
   </div>
   <div id="pdoc" style="display:none;"><div class="stb" id="dstatus"></div><div class="dl"><div class="li"><div class="ld" style="background:#c8a24a;"></div>Need to book</div><div class="li"><div class="ld" style="background:#6aaa6a;"></div>Scheduled</div><div class="li"><div class="ld" style="background:#5a5650;"></div>Done</div></div><div id="doclist"></div><div class="sec" style="margin-top:1.5rem;"><div class="lbl">Add specialist</div><div class="ar"><input type="text" id="docname" placeholder="e.g. Cardiologist" onkeydown="if(event.key==='Enter')RL.addDoc()"><button class="ab" id="addbtn" type="button" onclick="RL.addDoc()">+ Add</button></div><input type="text" id="docnotes" placeholder="Notes -- e.g. re: itching" style="width:100%;"></div><div class="oop">Out-of-pocket max met for 2026 -- all covered in-network visits are $0 through Dec 31.</div></div>
   <div id="phist" style="display:none;"><div class="lh"><span class="lt">All entries</span><div style="display:flex;gap:8px;align-items:center;"><span class="lc" id="ecount"></span><button class="eb" id="expbtn" type="button" onclick="RL.exportCSV()">Export CSV</button></div></div><div class="stb" id="hstatus"></div><div id="elist"></div></div>
@@ -596,6 +598,10 @@ window.RL = {
   session: 'morning',
   hist: [],
   docRows: [],
+  currentDate: '',
+  dayTimer: null,
+  editId: '',
+  editIndex: -1,
   $: function(id){ return document.getElementById(id); },
   headers: function(){ return {'Content-Type':'application/json'}; },
   url: function(table, params){
@@ -620,12 +626,12 @@ window.RL = {
     }, {});
     return parts;
   },
-  localDate: function(){
-    var p=this.laDateParts(new Date());
+  localDate: function(dateObj){
+    var p=this.laDateParts(dateObj || new Date());
     return p.year + '-' + p.month + '-' + p.day;
   },
-  localDateLabel: function(){
-    return new Date().toLocaleDateString('en-US', {
+  localDateLabel: function(dateObj){
+    return (dateObj || new Date()).toLocaleDateString('en-US', {
       timeZone:'America/Los_Angeles',
       weekday:'short',
       month:'short',
@@ -644,11 +650,33 @@ window.RL = {
     s=(s||'').toLowerCase();
     return s==='evening' ? 2 : 1;
   },
+  refreshToday: function(forceSession){
+    var now=new Date();
+    var nextDate=this.localDate(now);
+    var oldDate=this.currentDate;
+    var changed=nextDate!==this.currentDate;
+    this.currentDate=nextDate;
+    var t=this.$('tlabel');
+    if(t) t.textContent=this.localDateLabel(now);
+    var d=this.$('entrydate');
+    if(d && !this.editId && (!d.value || d.value===oldDate)) d.value=nextDate;
+    if(forceSession || (changed && !this.editId)) this.setSession(this.defaultSession());
+    return nextDate;
+  },
+  startDayWatcher: function(){
+    var self=this;
+    if(this.dayTimer) clearInterval(this.dayTimer);
+    this.dayTimer=setInterval(function(){ self.refreshToday(false); }, 60000);
+    document.addEventListener('visibilitychange', function(){
+      if(!document.hidden) self.refreshToday(false);
+    });
+    window.addEventListener('focus', function(){ self.refreshToday(false); });
+    window.addEventListener('pageshow', function(){ self.refreshToday(false); });
+  },
 
   init: function(){
-    var t=this.$('tlabel');
-    if(t) t.textContent = this.localDateLabel();
-    this.setSession(this.defaultSession());
+    this.refreshToday(true);
+    this.startDayWatcher();
     this.updateScore('pscr','pval');
     this.updateScore('mscr','mval');
   },
@@ -677,13 +705,55 @@ window.RL = {
   selectMood: function(btn){
     btn.classList.toggle('sel');
   },
+  prettyDate: function(dateStr){
+    return dateStr ? new Date(dateStr+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}) : '';
+  },
+  setPillSelections: function(selector, values){
+    var selected=(values||'').split(',').map(function(v){return v.trim();}).filter(Boolean);
+    document.querySelectorAll(selector+' .pill').forEach(function(p){
+      p.classList.toggle('sel', selected.indexOf(p.textContent.trim()) !== -1);
+    });
+  },
+  resetForm: function(){
+    this.editId=''; this.editIndex=-1;
+    this.$('entrydate').value=this.currentDate || this.refreshToday(false);
+    this.$('pscr').value=7; this.$('pval').textContent='7';
+    this.$('mscr').value=7; this.$('mval').textContent='7';
+    this.$('slphr').value=''; this.$('slpq').value=''; this.$('notes').value='';
+    document.querySelectorAll('#symp .pill.sel,#mood .pill.sel').forEach(function(p){p.classList.remove('sel');});
+    this.$('savebtn').textContent='Save Entry';
+    this.$('cancelEditBtn').style.display='none';
+    this.status('editstatus','','');
+  },
+  cancelEdit: function(){
+    this.resetForm();
+    this.status('lstatus','Edit canceled','');
+    var self=this;
+    setTimeout(function(){self.status('lstatus','','');},1400);
+  },
+  applyEntryToForm: function(e){
+    this.editId=e.id || '';
+    this.$('entrydate').value=e.date || this.currentDate || this.refreshToday(false);
+    this.setSession(e.session || 'morning');
+    this.$('pscr').value=e.physScore || 7; this.updateScore('pscr','pval');
+    this.$('mscr').value=e.mentScore || 7; this.updateScore('mscr','mval');
+    this.$('slphr').value=e.sleepHrs || '';
+    this.$('slpq').value=e.sleepQual || '';
+    this.$('notes').value=e.notes || '';
+    this.setPillSelections('#symp', e.symptoms || '');
+    this.setPillSelections('#mood', e.mood || '');
+    this.$('savebtn').textContent='Update Entry';
+    this.$('cancelEditBtn').style.display='block';
+    this.status('editstatus','Editing history entry for '+this.prettyDate(e.date),'');
+  },
   saveEntry: function(){
     var self=this, btn=this.$('savebtn');
+    var entryDate=this.$('entrydate').value || this.refreshToday(false);
     var syms=[];
     document.querySelectorAll('#symp .pill.sel').forEach(function(p){syms.push(p.textContent.trim());});
     var moods=[];document.querySelectorAll('#mood .pill.sel').forEach(function(p){moods.push(p.textContent.trim());});
     var fields={
-      'Date':this.localDate(),
+      'Date':entryDate,
       'Session':this.session.charAt(0).toUpperCase()+this.session.slice(1),
       'Physical':parseInt(this.$('pscr').value,10),
       'Mental':parseInt(this.$('mscr').value,10),
@@ -691,22 +761,23 @@ window.RL = {
       'Sleep Quality':this.session==='morning'?this.$('slpq').value:'',
       'Symptoms':syms.join(', '),
       'Mood':moods.join(', '),
-      'BM':this.$('bm').value,
       'Notes':this.$('notes').value.trim()
     };
-    btn.disabled=true; btn.textContent='Saving...'; this.status('lstatus','Saving...','');
-    fetch(this.url(this.entries),{method:'POST',headers:this.headers(),body:JSON.stringify({records:[{fields:fields}]})})
+    var isEdit=!!this.editId;
+    btn.disabled=true; btn.textContent=isEdit?'Updating...':'Saving...'; this.status('lstatus',isEdit?'Updating...':'Saving...','');
+    var target=isEdit ? this.url(this.entries+'/'+this.editId) : this.url(this.entries);
+    var options=isEdit ?
+      {method:'PATCH',headers:this.headers(),body:JSON.stringify({fields:fields})} :
+      {method:'POST',headers:this.headers(),body:JSON.stringify({records:[{fields:fields}]})};
+    fetch(target,options)
       .then(function(r){ if(!r.ok) return r.text().then(function(t){throw new Error(r.status+' '+t.slice(0,100));}); return r.json(); })
       .then(function(){
-        self.status('lstatus','Saved','ok');
-        self.$('pscr').value=7; self.$('pval').textContent='7';
-        self.$('mscr').value=7; self.$('mval').textContent='7';
-        self.$('slphr').value=''; self.$('slpq').value=''; self.$('bm').value=''; self.$('notes').value='';
-        document.querySelectorAll('#symp .pill.sel,#mood .pill.sel').forEach(function(p){p.classList.remove('sel');});
-        btn.textContent='Saved'; btn.classList.add('saved');
+        self.status('lstatus',isEdit?'Updated':'Saved','ok');
+        self.resetForm();
+        btn.textContent=isEdit?'Updated':'Saved'; btn.classList.add('saved');
         setTimeout(function(){btn.textContent='Save Entry';btn.classList.remove('saved');btn.disabled=false;self.status('lstatus','','');},1800);
       })
-      .catch(function(e){self.status('lstatus','Error: '+e.message,'err');btn.textContent='Save Entry';btn.disabled=false;});
+      .catch(function(e){self.status('lstatus','Error: '+e.message,'err');btn.textContent=isEdit?'Update Entry':'Save Entry';btn.disabled=false;});
   },
   loadDocs: function(){
     var self=this; this.status('dstatus','Loading...','');
@@ -757,7 +828,7 @@ window.RL = {
     l.innerHTML=this.hist.map(function(e,i){
       var dl=e.date?new Date(e.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}):'';
       var sa=e.symptoms?e.symptoms.split(', ').filter(Boolean):[];
-      return '<div class="ec" onclick="RL.openEntry('+i+')"><div class="et"><span class="ed">'+self.esc(dl)+'</span><div style="display:flex;align-items:center;gap:8px;"><span class="es '+(e.session==='morning'?'em':'ev')+'">'+(e.session==='morning'?'Morning':'Evening')+'</span><button class="xbtn" type="button" onclick="event.stopPropagation();RL.deleteEntry('+i+',\''+e.id+'\')">&#215;</button></div></div><div class="esc"><span class="sch">Physical <strong>'+e.physScore+'/10</strong></span><span class="sch">Mental <strong>'+e.mentScore+'/10</strong></span>'+(e.sleepHrs?'<span class="sch">Sleep <strong>'+e.sleepHrs+'h</strong></span>':'')+(e.mood?'<span class="sch">Mood <strong>'+self.esc(e.mood)+'</strong></span>':'')+'</div>'+(sa.length?'<div class="ep">'+sa.map(function(s){return'<span class="epl">'+self.esc(s)+'</span>';}).join('')+'</div>':'')+(e.notes?'<div class="epv">'+self.esc(e.notes)+'</div>':'')+'</div>';
+      return '<div class="ec" onclick="RL.openEntry('+i+')"><div class="et"><span class="ed">'+self.esc(dl)+'</span><div style="display:flex;align-items:center;gap:8px;"><span class="es '+(e.session==='morning'?'em':'ev')+'">'+(e.session==='morning'?'Morning':'Evening')+'</span><button class="eb" type="button" onclick="event.stopPropagation();RL.editEntry('+i+')">Edit</button><button class="xbtn" type="button" onclick="event.stopPropagation();RL.deleteEntry('+i+',\''+e.id+'\')">&#215;</button></div></div><div class="esc"><span class="sch">Physical <strong>'+e.physScore+'/10</strong></span><span class="sch">Mental <strong>'+e.mentScore+'/10</strong></span>'+(e.sleepHrs?'<span class="sch">Sleep <strong>'+e.sleepHrs+'h</strong></span>':'')+(e.mood?'<span class="sch">Mood <strong>'+self.esc(e.mood)+'</strong></span>':'')+'</div>'+(sa.length?'<div class="ep">'+sa.map(function(s){return'<span class="epl">'+self.esc(s)+'</span>';}).join('')+'</div>':'')+(e.notes?'<div class="epv">'+self.esc(e.notes)+'</div>':'')+'</div>';
     }).join('');
   },
   deleteEntry: function(i,id){
@@ -776,6 +847,14 @@ window.RL = {
     if(e.symptoms)h+='<div class="ms"><div class="ml">Symptoms</div><div class="mv">'+this.esc(e.symptoms)+'</div></div>';
     if(e.notes)h+='<div class="ms"><div class="ml">Notes</div><div class="mv">'+this.esc(e.notes)+'</div></div>';
     this.$('mbody').innerHTML=h; this.$('modal').classList.add('open');
+  },
+  editEntry: function(i){
+    var e=this.hist[i]; if(!e)return;
+    this.editIndex=i;
+    this.closeModal();
+    this.applyEntryToForm(e);
+    this.setTab('log');
+    this.status('lstatus','','');
   },
   closeModal: function(){ this.$('modal').classList.remove('open'); },
   exportCSV: function(){
