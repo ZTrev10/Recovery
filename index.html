@@ -144,7 +144,7 @@ textarea{min-height:110px !important;}
 
 
 
-<style id="final-netlify-responsive-theme">
+<style id="final-responsive-theme">
 :root{
   --page:#11100f!important;
   --panel:#1a1918!important;
@@ -605,7 +605,7 @@ window.RL = {
   $: function(id){ return document.getElementById(id); },
   headers: function(){ return {'Content-Type':'application/json'}; },
   url: function(table, params){
-    var u = '/.netlify/functions/airtable?table=' + encodeURIComponent(table);
+    var u = '/api/airtable?table=' + encodeURIComponent(table);
     if(params) u += '&' + new URLSearchParams(params);
     return u;
   },
